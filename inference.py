@@ -1,11 +1,6 @@
 import numpy as np
-import pickle
 from itertools import compress
-from scipy.stats import uniform as unif
-import random
 import pickle
-from sklearn.preprocessing import OneHotEncoder
-import matplotlib.pyplot as plt
 
 
 with open("rolls_history.p", "rb") as f:
@@ -23,14 +18,15 @@ pi = [.5, .5]
 class HMM:
     def __init__(self, pi=pi, A=transmat, B=obsModel, evd=rolls_onehot):
         self.pi = pi
-        self.A = A
+        self.A = np.array(A)
         self.B = B
         self.evd = evd
         self.N = len(self.pi)
         self.T, self.M = self.evd.shape
-        self.Z = np.zeros(self.T)
+        self.Z = np.zeros(self.T, dtype=np.int)
         self.alpha = np.zeros((self.T, self.N))
         self.beta = np.zeros((self.T, self.N))
+        self.delta = np.zeros((self.T, self.N))
 
     def normalize(self, a):
         return a / np.sum(a)
@@ -79,8 +75,58 @@ class HMM:
         return gamma
 
 
+    def viterbi(self):
+
+        # Initialization
+        delta = np.zeros((self.T, self.N))
+        psi = np.zeros((self.T, self.N), dtype=np.int)
+        optimal_path = np.zeros(self.T, dtype=np.int)
+
+        delta[0] = np.multiply(self.pi, self.find_B_w_O(0))
+
+        # Induction
+        for t in range(1, self.T):
+            for n in range(self.N):
+                delta[t, n] = np.max(delta[t-1] * self.A[:, n]) * self.find_B_w_O(t)[n]
+                psi[t, n] = np.argmax(delta[t-1] * self.A[:, n])
+
+        # Termination
+        p_star = np.max(self.delta[-1])
+        optimal_path[-1] = np.argmax(delta[-1])
+
+        # Backtracking the path
+        for t in range(self.T-2, -1, -1):
+            optimal_path[t] = psi[t + 1, optimal_path[t + 1]]
+
+        return p_star, optimal_path
+
 
 
     def generate_posterior(self):
         return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
