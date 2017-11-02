@@ -103,6 +103,7 @@ class HMM:
 
 
     def generate_posterior(self):
+        # TODO: sampling from lamda(pi, A, B)
         return
 
 
